@@ -6,10 +6,19 @@ export const LoginScreen: React.FC = () => {
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [name, setName] = useState('');
+  const [error, setError] = useState('');
   const { login, loginWithGoogle, loginWithApple, register, isLoading } = useAuth();
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+    
+    // Client-side validation
+    if (password.length < 6) {
+      setError('La contraseña debe tener al menos 6 caracteres.');
+      return;
+    }
+    
     if (email && password) {
       try {
         if (isSignUp) {
@@ -19,7 +28,8 @@ export const LoginScreen: React.FC = () => {
         }
       } catch (error) {
         console.error('Authentication error:', error);
-        alert('Error en la autenticación. Por favor, intenta de nuevo.');
+        const errorMessage = error instanceof Error ? error.message : 'Error en la autenticación. Por favor, intenta de nuevo.';
+        setError(errorMessage);
       }
     }
   };
@@ -43,6 +53,12 @@ export const LoginScreen: React.FC = () => {
             </p>
           </div>
 
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+              <p className="text-red-600 text-sm">{error}</p>
+            </div>
+          )}
+
           <form onSubmit={handleEmailSubmit} className="space-y-4">
             {isSignUp && (
               <input
@@ -63,7 +79,7 @@ export const LoginScreen: React.FC = () => {
             
             <input
               type="password"
-              placeholder="Contraseña"
+             placeholder="Contraseña (mínimo 6 caracteres)"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#E07A5F] focus:border-transparent"
@@ -71,7 +87,7 @@ export const LoginScreen: React.FC = () => {
             
             <button
               type="submit"
-              disabled={!email || !password || (isSignUp && !name) || isLoading}
+              disabled={!email || !password || password.length < 6 || (isSignUp && !name) || isLoading}
               className="w-full bg-[#E07A5F] text-white py-3 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#E07A5F]/90 transition-colors"
             >
               {isLoading ? 'Cargando...' : (isSignUp ? 'Registrarse' : 'Continuar')}
