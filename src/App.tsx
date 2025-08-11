@@ -9,6 +9,7 @@ import { CheckoutScreen } from './components/Checkout/CheckoutScreen';
 import { ProfileScreen } from './components/Profile/ProfileScreen';
 import { MessagesScreen } from './components/Messages/MessagesScreen';
 import { CreateStoreScreen } from './components/Store/CreateStoreScreen';
+import { CreateProductScreen } from './components/Products/CreateProductScreen';
 import { BottomNavigation } from './components/Layout/BottomNavigation';
 
 function AppContent() {
@@ -17,6 +18,7 @@ function AppContent() {
   const [currentPage, setCurrentPage] = useState('home');
   const [showCheckout, setShowCheckout] = useState(false);
   const [showCreateStore, setShowCreateStore] = useState(false);
+  const [showCreateProduct, setShowCreateProduct] = useState(false);
   const [messageCount] = useState(3); // Mock message count
 
   if (!user) {
@@ -35,12 +37,25 @@ function AppContent() {
     setShowCreateStore(true);
   };
 
+  const handleCreateProduct = () => {
+    setShowCreateProduct(true);
+  };
+
   const handleBackFromCreateStore = () => {
     setShowCreateStore(false);
   };
 
+  const handleBackFromCreateProduct = () => {
+    setShowCreateProduct(false);
+  };
+
   const handleStoreCreated = () => {
     setShowCreateStore(false);
+    setCurrentPage('home');
+  };
+
+  const handleProductCreated = () => {
+    setShowCreateProduct(false);
     setCurrentPage('home');
   };
 
@@ -61,6 +76,15 @@ function AppContent() {
     );
   }
 
+  if (showCreateProduct) {
+    return (
+      <CreateProductScreen 
+        onBack={handleBackFromCreateProduct}
+        onProductCreated={handleProductCreated}
+      />
+    );
+  }
+
   const renderCurrentPage = () => {
     switch (currentPage) {
       case 'home':
@@ -68,6 +92,7 @@ function AppContent() {
           <HomeScreen 
             onOpenMessages={handleOpenMessages}
             onCreateStore={handleCreateStore}
+            onCreateProduct={handleCreateProduct}
             messageCount={messageCount}
           />
         );

@@ -1,13 +1,16 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import { User as SupabaseUser } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase';
 import { User } from '../types';
 
 interface AuthContextType {
   user: User | null;
+  supabaseUser: SupabaseUser | null;
   login: (email: string, password: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
-  loginWithFacebook: () => Promise<void>;
+  loginWithApple: () => Promise<void>;
   logout: () => void;
-  register: (userData: Partial<User>) => Promise<void>;
+  register: (email: string, password: string, userData: Partial<User>) => Promise<void>;
   isLoading: boolean;
 }
 
@@ -23,87 +26,149 @@ export const useAuth = () => {
 
 export const useAuthProvider = () => {
   const [user, setUser] = useState<User | null>(null);
+  const [supabaseUser, setSupabaseUser] = useState<SupabaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate checking for existing session
-    const savedUser = localStorage.getItem('chaski_user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-    setIsLoading(false);
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSupabaseUser(session?.user ?? null);
+      if (session?.user) {
+        fetchUserProfile(session.user.id);
+      } else {
+        setIsLoading(false);
+      }
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      setSupabaseUser(session?.user ?? null);
+      if (session?.user) {
+        await fetchUserProfile(session.user.id);
+      } else {
+        setUser(null);
+        setIsLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
+
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+
+      if (data) {
+        setUser({
+          id: data.id,
+          name: data.name || '',
+          email: supabaseUser?.email || '',
+          role: data.role,
+          profileImage: data.profile_image || undefined,
+          ci: data.ci || undefined,
+          address: data.address || undefined,
+          phoneNumber: data.phone_number || undefined
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const createUserProfile = async (userId: string, userData: Partial<User>) => {
+    const { error } = await supabase
+      .from('profiles')
+      .insert({
+        id: userId,
+        name: userData.name,
+        role: userData.role || 'buyer',
+        profile_image: userData.profileImage,
+        ci: userData.ci,
+        address: userData.address,
+        phone_number: userData.phoneNumber
+      });
+
+    if (error) throw error;
+  };
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const mockUser: User = {
-      id: '1',
-      name: 'Mateo Araka',
+    const { error } = await supabase.auth.signInWithPassword({
       email,
-      role: 'buyer',
-      profileImage: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=400',
-      address: 'Cbba | Av. Circunvalación',
-      phoneNumber: '74342342'
-    };
-    
-    setUser(mockUser);
-    localStorage.setItem('chaski_user', JSON.stringify(mockUser));
-    setIsLoading(false);
+      password
+    });
+    if (error) {
+      setIsLoading(false);
+      throw error;
+    }
   };
 
   const loginWithGoogle = async () => {
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const mockUser: User = {
-      id: '1',
-      name: 'Mateo Araka',
-      email: 'mateo@gmail.com',
-      role: 'buyer',
-      profileImage: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=400',
-      address: 'Cbba | Av. Circunvalación',
-      phoneNumber: '74342342'
-    };
-    
-    setUser(mockUser);
-    localStorage.setItem('chaski_user', JSON.stringify(mockUser));
-    setIsLoading(false);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin
+      }
+    });
+    if (error) {
+      setIsLoading(false);
+      throw error;
+    }
   };
 
-  const loginWithFacebook = async () => {
-    await loginWithGoogle(); // Same mock implementation
-  };
-
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('chaski_user');
-  };
-
-  const register = async (userData: Partial<User>) => {
+  const loginWithApple = async () => {
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const newUser: User = {
-      id: Date.now().toString(),
-      name: userData.name || '',
-      email: userData.email || '',
-      role: userData.role || 'buyer',
-      ...userData
-    };
-    
-    setUser(newUser);
-    localStorage.setItem('chaski_user', JSON.stringify(newUser));
-    setIsLoading(false);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'apple',
+      options: {
+        redirectTo: window.location.origin
+      }
+    });
+    if (error) {
+      setIsLoading(false);
+      throw error;
+    }
+  };
+
+  const logout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+  };
+
+  const register = async (email: string, password: string, userData: Partial<User>) => {
+    setIsLoading(true);
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password
+    });
+
+    if (error) {
+      setIsLoading(false);
+      throw error;
+    }
+
+    if (data.user) {
+      await createUserProfile(data.user.id, userData);
+    }
   };
 
   return {
     user,
+    supabaseUser,
     login,
     loginWithGoogle,
-    loginWithFacebook,
+    loginWithApple,
     logout,
     register,
     isLoading

@@ -1,117 +1,258 @@
 import { useState, useEffect } from 'react';
-import { Product, Store, CartItem, Coupon } from '../types';
-
-// Mock data
-const mockProducts: Product[] = [
-  {
-    id: '1',
-    name: 'Camiseta Verde',
-    description: 'Camiseta de algodón premium',
-    price: 10.99,
-    image: 'https://images.pexels.com/photos/1187765/pexels-photo-1187765.jpeg?auto=compress&cs=tinysrgb&w=400',
-    storeId: '1',
-    category: 'Ropa',
-    isActive: true,
-    stock: 15
-  },
-  {
-    id: '2',
-    name: 'Reloj Negro',
-    description: 'Reloj deportivo resistente al agua',
-    price: 8.99,
-    image: 'https://images.pexels.com/photos/190819/pexels-photo-190819.jpeg?auto=compress&cs=tinysrgb&w=400',
-    storeId: '1',
-    category: 'Accesorios',
-    isActive: true,
-    stock: 8
-  },
-  {
-    id: '3',
-    name: 'Pantalón Azul',
-    description: 'Pantalón casual cómodo',
-    price: 10.99,
-    image: 'https://images.pexels.com/photos/1598505/pexels-photo-1598505.jpeg?auto=compress&cs=tinysrgb&w=400',
-    storeId: '2',
-    category: 'Ropa',
-    isActive: true,
-    stock: 12
-  }
-];
-
-const mockStores: Store[] = [
-  {
-    id: '1',
-    name: 'Tienda Central',
-    description: 'Tu tienda de confianza en el barrio',
-    images: ['https://images.pexels.com/photos/264636/pexels-photo-264636.jpeg?auto=compress&cs=tinysrgb&w=400'],
-    address: 'Av. Principal 123',
-    ownerId: '2',
-    coordinates: [-17.3895, -66.1568],
-    isActive: true,
-    createdAt: new Date()
-  },
-  {
-    id: '2',
-    name: 'Minimarket San José',
-    description: 'Productos frescos y variados',
-    images: ['https://images.pexels.com/photos/1005638/pexels-photo-1005638.jpeg?auto=compress&cs=tinysrgb&w=400'],
-    address: 'Calle Comercio 456',
-    ownerId: '3',
-    coordinates: [-17.3935, -66.1578],
-    isActive: true,
-    createdAt: new Date()
-  }
-];
+import { supabase } from '../lib/supabase';
+import { useAuth } from './useAuth';
+import { Product, Store, CartItem } from '../types';
 
 export const useStore = () => {
-  const [products, setProducts] = useState<Product[]>(mockProducts);
-  const [stores, setStores] = useState<Store[]>(mockStores);
+  const { user } = useAuth();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [stores, setStores] = useState<Store[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Fetch products
+  useEffect(() => {
+    fetchProducts();
+    fetchStores();
+  }, []);
+
+  // Fetch user-specific data when user changes
+  useEffect(() => {
+    if (user) {
+      fetchCart();
+      fetchWishlist();
+    } else {
+      setCart([]);
+      setWishlist([]);
+    }
+  }, [user]);
+
+  const fetchProducts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          stores (
+            name,
+            address
+          )
+        `)
+        .eq('is_active', true);
+
+      if (error) throw error;
+
+      const formattedProducts: Product[] = data.map(item => ({
+        id: item.id,
+        name: item.name,
+        description: item.description || '',
+        price: item.price,
+        image: item.images[0] || '',
+        images: item.images,
+        storeId: item.store_id,
+        category: item.category || '',
+        isActive: item.is_active,
+        stock: item.stock
+      }));
+
+      setProducts(formattedProducts);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    }
+  };
+
+  const fetchStores = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('stores')
+        .select('*')
+        .eq('is_active', true);
+
+      if (error) throw error;
+
+      const formattedStores: Store[] = data.map(item => ({
+        id: item.id,
+        name: item.name,
+        description: item.description || '',
+        images: item.images,
+        address: item.address,
+        ownerId: item.owner_id,
+        coordinates: item.coordinates ? JSON.parse(item.coordinates) : [0, 0],
+        isActive: item.is_active,
+        createdAt: new Date(item.created_at)
+      }));
+
+      setStores(formattedStores);
+    } catch (error) {
+      console.error('Error fetching stores:', error);
+    }
+  };
+
+  const fetchCart = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('cart_items')
+        .select(`
+          *,
+          products (*)
+        `)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      const cartItems: CartItem[] = data.map(item => ({
+        product: {
+          id: item.products.id,
+          name: item.products.name,
+          description: item.products.description || '',
+          price: item.products.price,
+          image: item.products.images[0] || '',
+          images: item.products.images,
+          storeId: item.products.store_id,
+          category: item.products.category || '',
+          isActive: item.products.is_active,
+          stock: item.products.stock
+        },
+        quantity: item.quantity
+      }));
+
+      setCart(cartItems);
+    } catch (error) {
+      console.error('Error fetching cart:', error);
+    }
+  };
+
+  const fetchWishlist = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('wishlist_items')
+        .select('product_id')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setWishlist(data.map(item => item.product_id));
+    } catch (error) {
+      console.error('Error fetching wishlist:', error);
+    }
+  };
+
   // Cart functions
-  const addToCart = (product: Product, quantity: number = 1) => {
-    setCart(prevCart => {
-      const existingItem = prevCart.find(item => item.product.id === product.id);
+  const addToCart = async (product: Product, quantity: number = 1) => {
+    if (!user) return;
+
+    try {
+      const existingItem = cart.find(item => item.product.id === product.id);
+      
       if (existingItem) {
-        return prevCart.map(item =>
-          item.product.id === product.id
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
-        );
+        await updateCartQuantity(product.id, existingItem.quantity + quantity);
+      } else {
+        const { error } = await supabase
+          .from('cart_items')
+          .insert({
+            user_id: user.id,
+            product_id: product.id,
+            quantity
+          });
+
+        if (error) throw error;
+        await fetchCart();
       }
-      return [...prevCart, { product, quantity }];
-    });
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+    }
   };
 
-  const removeFromCart = (productId: string) => {
-    setCart(prevCart => prevCart.filter(item => item.product.id !== productId));
+  const removeFromCart = async (productId: string) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('cart_items')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('product_id', productId);
+
+      if (error) throw error;
+      await fetchCart();
+    } catch (error) {
+      console.error('Error removing from cart:', error);
+    }
   };
 
-  const updateCartQuantity = (productId: string, quantity: number) => {
+  const updateCartQuantity = async (productId: string, quantity: number) => {
+    if (!user) return;
+
     if (quantity <= 0) {
-      removeFromCart(productId);
+      await removeFromCart(productId);
       return;
     }
-    setCart(prevCart =>
-      prevCart.map(item =>
-        item.product.id === productId ? { ...item, quantity } : item
-      )
-    );
+
+    try {
+      const { error } = await supabase
+        .from('cart_items')
+        .update({ quantity })
+        .eq('user_id', user.id)
+        .eq('product_id', productId);
+
+      if (error) throw error;
+      await fetchCart();
+    } catch (error) {
+      console.error('Error updating cart quantity:', error);
+    }
   };
 
-  const clearCart = () => {
-    setCart([]);
+  const clearCart = async () => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('cart_items')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      setCart([]);
+    } catch (error) {
+      console.error('Error clearing cart:', error);
+    }
   };
 
   // Wishlist functions
-  const toggleWishlist = (productId: string) => {
-    setWishlist(prev => 
-      prev.includes(productId) 
-        ? prev.filter(id => id !== productId)
-        : [...prev, productId]
-    );
+  const toggleWishlist = async (productId: string) => {
+    if (!user) return;
+
+    try {
+      const isInWishlist = wishlist.includes(productId);
+
+      if (isInWishlist) {
+        const { error } = await supabase
+          .from('wishlist_items')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('product_id', productId);
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('wishlist_items')
+          .insert({
+            user_id: user.id,
+            product_id: productId
+          });
+
+        if (error) throw error;
+      }
+
+      await fetchWishlist();
+    } catch (error) {
+      console.error('Error toggling wishlist:', error);
+    }
   };
 
   const getWishlistProducts = () => {
@@ -120,33 +261,90 @@ export const useStore = () => {
 
   // Store functions
   const createStore = async (storeData: Omit<Store, 'id' | 'createdAt'>) => {
+    if (!user) return;
+
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const newStore: Store = {
-      ...storeData,
-      id: Date.now().toString(),
-      createdAt: new Date()
-    };
-    
-    setStores(prev => [...prev, newStore]);
-    setIsLoading(false);
-    return newStore;
+    try {
+      const { data, error } = await supabase
+        .from('stores')
+        .insert({
+          name: storeData.name,
+          description: storeData.description,
+          images: storeData.images,
+          address: storeData.address,
+          owner_id: user.id,
+          coordinates: JSON.stringify(storeData.coordinates),
+          is_active: storeData.isActive
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const newStore: Store = {
+        id: data.id,
+        name: data.name,
+        description: data.description || '',
+        images: data.images,
+        address: data.address,
+        ownerId: data.owner_id,
+        coordinates: JSON.parse(data.coordinates),
+        isActive: data.is_active,
+        createdAt: new Date(data.created_at)
+      };
+
+      setStores(prev => [...prev, newStore]);
+      return newStore;
+    } catch (error) {
+      console.error('Error creating store:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Product functions
   const createProduct = async (productData: Omit<Product, 'id'>) => {
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const newProduct: Product = {
-      ...productData,
-      id: Date.now().toString()
-    };
-    
-    setProducts(prev => [...prev, newProduct]);
-    setIsLoading(false);
-    return newProduct;
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .insert({
+          name: productData.name,
+          description: productData.description,
+          price: productData.price,
+          images: productData.images || [productData.image],
+          store_id: productData.storeId,
+          category: productData.category,
+          is_active: productData.isActive,
+          stock: productData.stock
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const newProduct: Product = {
+        id: data.id,
+        name: data.name,
+        description: data.description || '',
+        price: data.price,
+        image: data.images[0] || '',
+        images: data.images,
+        storeId: data.store_id,
+        category: data.category || '',
+        isActive: data.is_active,
+        stock: data.stock
+      };
+
+      setProducts(prev => [...prev, newProduct]);
+      return newProduct;
+    } catch (error) {
+      console.error('Error creating product:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const getCartTotal = () => {
@@ -172,6 +370,8 @@ export const useStore = () => {
     createStore,
     createProduct,
     getCartTotal,
-    getCartItemCount
+    getCartItemCount,
+    fetchProducts,
+    fetchStores
   };
 };

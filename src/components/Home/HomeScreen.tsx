@@ -6,10 +6,11 @@ import { Product } from '../../types';
 interface HomeScreenProps {
   onOpenMessages: () => void;
   onCreateStore: () => void;
+  onCreateProduct: () => void;
   messageCount?: number;
 }
 
-export const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenMessages, onCreateStore, messageCount = 0 }) => {
+export const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenMessages, onCreateStore, onCreateProduct, messageCount = 0 }) => {
   const { products, addToCart, toggleWishlist, wishlist } = useStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [showVenderOptions, setShowVenderOptions] = useState(false);
@@ -62,7 +63,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenMessages, onCreate
                 <button 
                   onClick={() => {
                     setShowVenderOptions(false);
-                    // Handle publish product
+                    onCreateProduct();
                   }}
                   className="w-full flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50"
                 >
