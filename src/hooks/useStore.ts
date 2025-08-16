@@ -20,8 +20,16 @@ export const useStore = () => {
   // Fetch user-specific data when user changes
   useEffect(() => {
     if (user) {
-      fetchCart();
-      fetchWishlist();
+      // Skip fetching user data if in demo mode
+      const skipAuth = localStorage.getItem('skipAuth');
+      if (skipAuth !== 'true') {
+        fetchCart();
+        fetchWishlist();
+      } else {
+        // Set mock data for demo
+        setCart([]);
+        setWishlist([]);
+      }
     } else {
       setCart([]);
       setWishlist([]);
@@ -146,6 +154,22 @@ export const useStore = () => {
   const addToCart = async (product: Product, quantity: number = 1) => {
     if (!user) return;
 
+    // Handle demo mode
+    const skipAuth = localStorage.getItem('skipAuth');
+    if (skipAuth === 'true') {
+      const existingItem = cart.find(item => item.product.id === product.id);
+      if (existingItem) {
+        setCart(prev => prev.map(item => 
+          item.product.id === product.id 
+            ? { ...item, quantity: item.quantity + quantity }
+            : item
+        ));
+      } else {
+        setCart(prev => [...prev, { product, quantity }]);
+      }
+      return;
+    }
+
     try {
       const existingItem = cart.find(item => item.product.id === product.id);
       
@@ -171,6 +195,13 @@ export const useStore = () => {
   const removeFromCart = async (productId: string) => {
     if (!user) return;
 
+    // Handle demo mode
+    const skipAuth = localStorage.getItem('skipAuth');
+    if (skipAuth === 'true') {
+      setCart(prev => prev.filter(item => item.product.id !== productId));
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('cart_items')
@@ -187,6 +218,21 @@ export const useStore = () => {
 
   const updateCartQuantity = async (productId: string, quantity: number) => {
     if (!user) return;
+
+    // Handle demo mode
+    const skipAuth = localStorage.getItem('skipAuth');
+    if (skipAuth === 'true') {
+      if (quantity <= 0) {
+        setCart(prev => prev.filter(item => item.product.id !== productId));
+      } else {
+        setCart(prev => prev.map(item => 
+          item.product.id === productId 
+            ? { ...item, quantity }
+            : item
+        ));
+      }
+      return;
+    }
 
     if (quantity <= 0) {
       await removeFromCart(productId);
@@ -210,6 +256,13 @@ export const useStore = () => {
   const clearCart = async () => {
     if (!user) return;
 
+    // Handle demo mode
+    const skipAuth = localStorage.getItem('skipAuth');
+    if (skipAuth === 'true') {
+      setCart([]);
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('cart_items')
@@ -226,6 +279,17 @@ export const useStore = () => {
   // Wishlist functions
   const toggleWishlist = async (productId: string) => {
     if (!user) return;
+
+    // Handle demo mode
+    const skipAuth = localStorage.getItem('skipAuth');
+    if (skipAuth === 'true') {
+      setWishlist(prev => 
+        prev.includes(productId)
+          ? prev.filter(id => id !== productId)
+          : [...prev, productId]
+      );
+      return;
+    }
 
     try {
       const isInWishlist = wishlist.includes(productId);

@@ -9,6 +9,13 @@ export const LoginScreen: React.FC = () => {
   const [error, setError] = useState('');
   const { login, loginWithGoogle, loginWithApple, register, isLoading } = useAuth();
 
+  // Mock user for demo purposes
+  const handleSkipLogin = () => {
+    // This will be handled in the useAuth hook
+    window.localStorage.setItem('skipAuth', 'true');
+    window.location.reload();
+  };
+
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -143,6 +150,16 @@ export const LoginScreen: React.FC = () => {
               className="text-[#E07A5F] text-sm font-medium"
             >
               {isSignUp ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate'}
+            </button>
+          </div>
+
+          {/* Skip Login Button */}
+          <div className="text-center">
+            <button
+              onClick={handleSkipLogin}
+              className="w-full bg-gray-100 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
+            >
+              Continuar sin cuenta (Demo)
             </button>
           </div>
 

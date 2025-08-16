@@ -29,7 +29,34 @@ export const useAuthProvider = () => {
   const [supabaseUser, setSupabaseUser] = useState<SupabaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Check for skip auth on mount
   useEffect(() => {
+    const skipAuth = localStorage.getItem('skipAuth');
+    if (skipAuth === 'true') {
+      // Create a mock user for demo purposes
+      const mockUser: User = {
+        id: 'demo-user-id',
+        name: 'Usuario Demo',
+        email: 'demo@chaski.com',
+        role: 'buyer',
+        profileImage: undefined,
+        ci: undefined,
+        address: 'Cochabamba, Bolivia',
+        phoneNumber: '70123456'
+      };
+      setUser(mockUser);
+      setIsLoading(false);
+      return;
+    }
+  }, []);
+
+  useEffect(() => {
+    // Skip Supabase auth if using demo mode
+    const skipAuth = localStorage.getItem('skipAuth');
+    if (skipAuth === 'true') {
+      return;
+    }
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSupabaseUser(session?.user ?? null);
@@ -142,6 +169,9 @@ export const useAuthProvider = () => {
   };
 
   const logout = async () => {
+    // Clear demo mode
+    localStorage.removeItem('skipAuth');
+    
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
   };
