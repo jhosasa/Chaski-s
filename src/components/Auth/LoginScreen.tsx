@@ -28,7 +28,18 @@ export const LoginScreen: React.FC = () => {
         }
       } catch (error) {
         console.error('Authentication error:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Error en la autenticación. Por favor, intenta de nuevo.';
+        let errorMessage = 'Error en la autenticación. Por favor, intenta de nuevo.';
+        
+        if (error instanceof Error) {
+          if (error.message.includes('Invalid login credentials')) {
+            errorMessage = 'Credenciales incorrectas. ¿No tienes cuenta? Regístrate primero.';
+          } else if (error.message.includes('User already registered')) {
+            errorMessage = 'Este email ya está registrado. Intenta iniciar sesión.';
+          } else {
+            errorMessage = error.message;
+          }
+        }
+        
         setError(errorMessage);
       }
     }
