@@ -230,6 +230,34 @@ export const useAuthProvider = () => {
     if (error) throw error;
   };
 
+  const updateUserProfile = async (updates: { address?: string; phone_number?: string }) => {
+    if (!user) throw new Error('No user logged in');
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', user.id);
+
+    if (error) throw error;
+
+    // Update local user state
+    setUser(prev => prev ? {
+      ...prev,
+      address: updates.address ?? prev.address,
+      phoneNumber: updates.phone_number ?? prev.phoneNumber
+    } : null);
+  };
+
+  const updatePassword = async (newPassword: string) => {
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword
+    });
+
+    if (error) throw error;
+  };
   const register = async (email: string, password: string, userData: Partial<User>) => {
     setIsLoading(true);
     const { data, error } = await supabase.auth.signUp({
@@ -255,6 +283,8 @@ export const useAuthProvider = () => {
     loginWithApple,
     logout,
     register,
+    updateUserProfile,
+    updatePassword,
     isLoading
   };
 };
