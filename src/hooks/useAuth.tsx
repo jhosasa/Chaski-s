@@ -71,7 +71,30 @@ export const useAuthProvider = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSupabaseUser(session?.user ?? null);
       if (session?.user) {
-        await fetchUserProfile(session.user.id);
+        try {
+          // Try to fetch existing profile
+          const existingProfile = await fetchUserProfile(session.user.id);
+          
+          if (existingProfile) {
+            // Profile exists, use it
+            setUserFromProfile(existingProfile, session.user.email || '');
+          } else {
+            // No profile exists, create one for OAuth users
+            if (session.user.app_metadata?.provider && session.user.app_metadata.provider !== 'email') {
+              // This is an OAuth user, create profile automatically
+              const newProfile = await createOAuthProfile(session.user.id, session.user.user_metadata || {});
+              setUserFromProfile(newProfile, session.user.email || '');
+            } else {
+              // This is an email user without profile (shouldn't happen normally)
+              setUser(null);
+            }
+          }
+        } catch (error) {
+          console.error('Error handling auth state change:', error);
+          setUser(null);
+        } finally {
+          setIsLoading(false);
+        }
       } else {
         setUser(null);
         setIsLoading(false);
@@ -89,27 +112,58 @@ export const useAuthProvider = () => {
         .eq('id', userId)
         .single();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // Profile doesn't exist, this is expected for new OAuth users
+          return null;
+        }
         throw error;
       }
 
-      if (data) {
-        setUser({
-          id: data.id,
-          name: data.name || '',
-          email: supabaseUser?.email || '',
-          role: data.role,
-          profileImage: data.profile_image || undefined,
-          ci: data.ci || undefined,
-          address: data.address || undefined,
-          phoneNumber: data.phone_number || undefined
-        });
-      }
+      return data;
     } catch (error) {
       console.error('Error fetching user profile:', error);
-    } finally {
-      setIsLoading(false);
+      return null;
     }
+  };
+
+  const createOAuthProfile = async (userId: string, userMetadata: any) => {
+    try {
+      const profileData = {
+        id: userId,
+        name: userMetadata.full_name || userMetadata.name || '',
+        role: 'buyer' as const,
+        profile_image: userMetadata.avatar_url || userMetadata.picture || null,
+        ci: null,
+        address: null,
+        phone_number: null
+      };
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .insert(profileData)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error creating OAuth profile:', error);
+      throw error;
+    }
+  };
+
+  const setUserFromProfile = (profileData: any, email: string) => {
+    setUser({
+      id: profileData.id,
+      name: profileData.name || '',
+      email: email,
+      role: profileData.role,
+      profileImage: profileData.profile_image || undefined,
+      ci: profileData.ci || undefined,
+      address: profileData.address || undefined,
+      phoneNumber: profileData.phone_number || undefined
+    });
   };
 
   const createUserProfile = async (userId: string, userData: Partial<User>) => {
