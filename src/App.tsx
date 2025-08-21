@@ -7,6 +7,7 @@ import { WishlistScreen } from './components/Wishlist/WishlistScreen';
 import { CartScreen } from './components/Cart/CartScreen';
 import { CheckoutScreen } from './components/Checkout/CheckoutScreen';
 import { ProfileScreen } from './components/Profile/ProfileScreen';
+import { ViewProfileScreen } from './components/Profile/ViewProfileScreen';
 import { MessagesScreen } from './components/Messages/MessagesScreen';
 import { CreateStoreScreen } from './components/Store/CreateStoreScreen';
 import { CreateProductScreen } from './components/Products/CreateProductScreen';
@@ -19,6 +20,7 @@ function AppContent() {
   const [showCheckout, setShowCheckout] = useState(false);
   const [showCreateStore, setShowCreateStore] = useState(false);
   const [showCreateProduct, setShowCreateProduct] = useState(false);
+  const [showViewProfile, setShowViewProfile] = useState(false);
   const [messageCount] = useState(3); // Mock message count
 
   if (!user) {
@@ -63,6 +65,14 @@ function AppContent() {
     setCurrentPage('messages');
   };
 
+  const handleViewProfile = () => {
+    setShowViewProfile(true);
+  };
+
+  const handleBackFromViewProfile = () => {
+    setShowViewProfile(false);
+  };
+
   if (showCheckout) {
     return <CheckoutScreen onBack={handleBackFromCheckout} />;
   }
@@ -85,6 +95,10 @@ function AppContent() {
     );
   }
 
+  if (showViewProfile) {
+    return <ViewProfileScreen onBack={handleBackFromViewProfile} />;
+  }
+
   const renderCurrentPage = () => {
     switch (currentPage) {
       case 'home':
@@ -103,7 +117,7 @@ function AppContent() {
       case 'messages':
         return <MessagesScreen />;
       case 'profile':
-        return <ProfileScreen />;
+        return <ProfileScreen onViewProfile={handleViewProfile} />;
       default:
         return <HomeScreen />;
     }

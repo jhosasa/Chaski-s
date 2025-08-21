@@ -1,8 +1,12 @@
 import React from 'react';
-import { Edit, MapPin, Phone, Mail, CreditCard, ShoppingBag, Bell, HelpCircle, LogOut, ChevronRight, Save, X, Shield } from 'lucide-react';
+import { Edit, MapPin, Phone, Mail, CreditCard, ShoppingBag, Bell, HelpCircle, LogOut, ChevronRight, Save, X, Shield, User } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
-export const ProfileScreen: React.FC = () => {
+interface ProfileScreenProps {
+  onViewProfile?: () => void;
+}
+
+export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onViewProfile }) => {
   const { user, supabaseUser, logout, updateUserProfile, updatePassword } = useAuth();
   const [isEditing, setIsEditing] = React.useState(false);
   const [editedAddress, setEditedAddress] = React.useState(user?.address || 'Cbba | Av. Circunvalación');
@@ -113,7 +117,7 @@ export const ProfileScreen: React.FC = () => {
         
         {/* Profile Card */}
         <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 bg-white/20 rounded-full overflow-hidden">
                 {user?.profileImage ? (
@@ -154,6 +158,16 @@ export const ProfileScreen: React.FC = () => {
               )}
             </div>
           </div>
+          
+          {/* Ver perfil button */}
+          <button
+            onClick={onViewProfile}
+            className="w-full flex items-center justify-center gap-2 py-2 bg-white/20 rounded-lg text-white hover:bg-white/30 transition-colors"
+          >
+            <User size={16} />
+            <span className="text-sm font-medium">Ver perfil</span>
+            <ChevronRight size={16} />
+          </button>
         </div>
       </div>
 
