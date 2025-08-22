@@ -162,7 +162,9 @@ export const useAuthProvider = () => {
       profileImage: profileData.profile_image || undefined,
       ci: profileData.ci || undefined,
       address: profileData.address || undefined,
-      phoneNumber: profileData.phone_number || undefined
+      phoneNumber: profileData.phone_number || undefined,
+      averageRating: profileData.average_rating || 0,
+      totalRatings: profileData.total_ratings || 0
     });
   };
 
@@ -247,7 +249,9 @@ export const useAuthProvider = () => {
     setUser(prev => prev ? {
       ...prev,
       address: updates.address ?? prev.address,
-      phoneNumber: updates.phone_number ?? prev.phoneNumber
+      phoneNumber: updates.phone_number ?? prev.phoneNumber,
+      averageRating: prev.averageRating,
+      totalRatings: prev.totalRatings
     } : null);
   };
 

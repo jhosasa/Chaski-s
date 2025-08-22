@@ -1,5 +1,5 @@
 import React from 'react';
-import { Edit, MapPin, Phone, Mail, CreditCard, ShoppingBag, Bell, HelpCircle, LogOut, ChevronRight, Save, X, Shield, User, Store } from 'lucide-react';
+import { Edit, MapPin, Phone, Mail, CreditCard, ShoppingBag, Bell, HelpCircle, LogOut, ChevronRight, Save, X, Shield, User, Store, Star } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
 interface ProfileScreenProps {
@@ -153,9 +153,19 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onViewProfile }) =
           </h2>
           <div className="flex items-center justify-center gap-1 mb-4">
             {[...Array(5)].map((_, i) => (
-              <span key={i} className="text-gray-300">⭐</span>
+              <Star 
+                key={i} 
+                size={16} 
+                className={`${
+                  i < Math.floor(user?.averageRating || 0) 
+                    ? 'text-yellow-400 fill-yellow-400' 
+                    : 'text-gray-300'
+                }`} 
+              />
             ))}
-            <span className="text-gray-500 text-sm ml-2">(0.0)</span>
+            <span className="text-gray-500 text-sm ml-2">
+              ({(user?.averageRating || 0).toFixed(1)}) • {user?.totalRatings || 0} reseñas
+            </span>
           </div>
           
           {/* Ver perfil button */}
@@ -204,7 +214,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onViewProfile }) =
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center">
-                  <span className="text-sm">👤</span>
+                  <User size={16} className="text-gray-600" />
                 </div>
                 <div className="flex-1">
                   <p className="font-medium text-gray-900">Nombre</p>
@@ -235,7 +245,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onViewProfile }) =
             <div className="p-4 bg-gray-50 rounded-xl">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center">
-                  <span className="text-sm">📝</span>
+                  <Edit size={16} className="text-gray-600" />
                 </div>
                 <p className="font-medium text-gray-900">Descripción</p>
               </div>
@@ -258,7 +268,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onViewProfile }) =
             <div className="p-4 bg-gray-50 rounded-xl">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center">
-                  <span className="text-sm">📍</span>
+                  <MapPin size={16} className="text-gray-600" />
                 </div>
                 <p className="font-medium text-gray-900">Ubicación (opcional)</p>
               </div>
@@ -281,7 +291,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onViewProfile }) =
             <div className="p-4 bg-gray-50 rounded-xl">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center">
-                  <span className="text-sm">🏷️</span>
+                  <ShoppingBag size={16} className="text-gray-600" />
                 </div>
                 <p className="font-medium text-gray-900">Categoría</p>
               </div>
@@ -310,7 +320,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onViewProfile }) =
             <div className="p-4 bg-gray-50 rounded-xl">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center">
-                  <span className="text-sm">📱</span>
+                  <Phone size={16} className="text-gray-600" />
                 </div>
                 <p className="font-medium text-gray-900">Teléfono (opcional)</p>
               </div>
@@ -364,11 +374,11 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onViewProfile }) =
         ) : (
           <div className="flex gap-3 mb-8">
             <button className="flex-1 py-3 bg-[#E07A5F] text-white rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-[#E07A5F]/90 transition-colors">
-              <span className="text-lg">📦</span>
+              <ShoppingBag size={20} />
               Publicar un producto
             </button>
             <button className="flex-1 py-3 bg-[#E07A5F] text-white rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-[#E07A5F]/90 transition-colors">
-              <span className="text-lg">🏪</span>
+              <Store size={20} />
               Crear tienda
             </button>
           </div>

@@ -107,6 +107,7 @@ function AppContent() {
             onOpenMessages={handleOpenMessages}
             onCreateStore={handleCreateStore}
             onCreateProduct={handleCreateProduct}
+            onViewUserProfile={handleViewUserProfile}
             messageCount={messageCount}
           />
         );

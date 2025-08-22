@@ -7,6 +7,8 @@ export interface User {
   ci?: string;
   address?: string;
   phoneNumber?: string;
+  averageRating?: number;
+  totalRatings?: number;
 }
 
 export interface Store {
@@ -73,5 +75,15 @@ export interface Conversation {
   id: string;
   participants: string[];
   lastMessage: Message;
+  updatedAt: Date;
+}
+
+export interface Rating {
+  id: string;
+  userId: string;
+  ratedUserId: string;
+  rating: number;
+  comment?: string;
+  createdAt: Date;
   updatedAt: Date;
 }

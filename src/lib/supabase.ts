@@ -21,6 +21,8 @@ export type Database = {
           ci: string | null;
           address: string | null;
           phone_number: string | null;
+          average_rating: number | null;
+          total_ratings: number | null;
           created_at: string;
           updated_at: string;
         };
@@ -32,6 +34,8 @@ export type Database = {
           ci?: string | null;
           address?: string | null;
           phone_number?: string | null;
+          average_rating?: number | null;
+          total_ratings?: number | null;
         };
         Update: {
           name?: string | null;
@@ -40,6 +44,8 @@ export type Database = {
           ci?: string | null;
           address?: string | null;
           phone_number?: string | null;
+          average_rating?: number | null;
+          total_ratings?: number | null;
           updated_at?: string;
         };
       };
@@ -180,6 +186,28 @@ export type Database = {
           price: number;
         };
         Update: {};
+      };
+      ratings: {
+        Row: {
+          id: string;
+          user_id: string;
+          rated_user_id: string;
+          rating: number;
+          comment: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          rated_user_id: string;
+          rating: number;
+          comment?: string | null;
+        };
+        Update: {
+          rating?: number;
+          comment?: string | null;
+          updated_at?: string;
+        };
       };
     };
   };
