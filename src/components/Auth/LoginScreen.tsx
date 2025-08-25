@@ -166,4 +166,8 @@ export const LoginScreen: React.FC = () => {
           <p className="text-xs text-gray-500 text-center leading-relaxed">
   Al continuar, aceptas nuestros <span className="underline">Términos de Servicio</span> y <span className="underline">Política de Privacidad</span>.
 </p> 
-          
+        </div>
+      </div>
+    </div>
+  );
+};
