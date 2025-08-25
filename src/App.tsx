@@ -21,6 +21,7 @@ function AppContent() {
   const [showCreateStore, setShowCreateStore] = useState(false);
   const [showCreateProduct, setShowCreateProduct] = useState(false);
   const [showViewProfile, setShowViewProfile] = useState(false);
+  const [userIdToView, setUserIdToView] = useState<string | null>(null);
   const [messageCount] = useState(3); // Mock message count
 
   if (!user) {
@@ -69,8 +70,14 @@ function AppContent() {
     setShowViewProfile(true);
   };
 
+  const handleViewUserProfile = (userId: string) => {
+    setUserIdToView(userId);
+    setShowViewProfile(true);
+  };
+
   const handleBackFromViewProfile = () => {
     setShowViewProfile(false);
+    setUserIdToView(null);
   };
 
   if (showCheckout) {
@@ -96,7 +103,7 @@ function AppContent() {
   }
 
   if (showViewProfile) {
-    return <ViewProfileScreen onBack={handleBackFromViewProfile} />;
+    return <ViewProfileScreen onBack={handleBackFromViewProfile} userId={userIdToView} />;
   }
 
   const renderCurrentPage = () => {
