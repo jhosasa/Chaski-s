@@ -8,6 +8,7 @@ import { CartScreen } from './components/Cart/CartScreen';
 import { CheckoutScreen } from './components/Checkout/CheckoutScreen';
 import { ProfileScreen } from './components/Profile/ProfileScreen';
 import { ViewProfileScreen } from './components/Profile/ViewProfileScreen';
+import { UserProfileScreen } from './components/Profile/UserProfileScreen';
 import { MessagesScreen } from './components/Messages/MessagesScreen';
 import { CreateStoreScreen } from './components/Store/CreateStoreScreen';
 import { CreateProductScreen } from './components/Products/CreateProductScreen';
@@ -103,7 +104,11 @@ function AppContent() {
   }
 
   if (showViewProfile) {
-    return <ViewProfileScreen onBack={handleBackFromViewProfile} userId={userIdToView} />;
+    if (userIdToView) {
+      return <UserProfileScreen onBack={handleBackFromViewProfile} userId={userIdToView} />;
+    } else {
+      return <ViewProfileScreen onBack={handleBackFromViewProfile} />;
+    }
   }
 
   const renderCurrentPage = () => {

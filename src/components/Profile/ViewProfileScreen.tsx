@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Edit, Save, X, Eye, EyeOff, Star, User, MapPin, Phone, Mail, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, Edit, Save, X, Eye, EyeOff, Star, User, MapPin, Phone, Mail, ShoppingBag, Store } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
 interface ViewProfileScreenProps {
